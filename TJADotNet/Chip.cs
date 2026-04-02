@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TJADotNet
+﻿namespace TJADotNet
 {
     /// <summary>
     /// チップのクラス。
@@ -72,6 +66,10 @@ namespace TJADotNet
         /// </summary>
         public int RollCount { get; set; }
         /// <summary>
+        /// 黄色連打・ふうせん連打の叩かれた打数。
+        /// </summary>
+        public int HittedRollCount { get; set; }
+        /// <summary>
         /// 小節数。
         /// </summary>
         public int MeasureCount { get; set; }
@@ -83,6 +81,43 @@ namespace TJADotNet
         /// 連打の終端。
         /// </summary>
         public Chip RollEnd { get; set; }
+        /// <summary>
+        /// SUDDENが有効かどうか。
+        /// </summary>
+        public bool sudden { get; set; }
+        /// <summary>
+        /// SUDDENの表示開始時間。
+        /// </summary>
+        public double suddenShowTime { get; set; }
+        /// <summary>
+        /// SUDDENの移動開始時間。
+        /// </summary>
+        public double suddenMoveTime { get; set; }
+        /// <summary>
+        /// 分岐の条件。
+        /// </summary>
+        public Format.BranchExam branchExam { get; set; } = new Format.BranchExam();
+        /// <summary>
+        /// 分岐開始時間。
+        /// </summary>
+        public long branchStartTime { get; set; }
+        /// <summary>
+        /// 分岐終了時間。
+        /// </summary>
+        public long branchEndTime { get; set; }
+        /// <summary>
+        /// 現在の歌詞。
+        /// </summary>
+        public string Lyric { get; set; }
+        /// <summary>
+        /// LevelRedirの効果でどの分岐に移動するか。
+        /// </summary>
+        public Format.Branches[] RedirectBranch { get; set; } = 
+        {
+            Format.Branches.Normal,
+            Format.Branches.Expert,
+            Format.Branches.Master
+        };
 
         public override string ToString()
         {

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TJADotNet.Format
+﻿namespace TJADotNet.Format
 {
     /// <summary>
     /// チップの列挙型。
@@ -59,6 +53,10 @@ namespace TJADotNet.Format
         /// 譜面分岐終了
         /// </summary>
         BranchEnd,
+        /// <summary>
+        /// どの分岐にリダイレクトするかを変更
+        /// </summary>
+        LevelRedir,
         /// <summary>
         /// 譜面分岐リセット
         /// </summary>

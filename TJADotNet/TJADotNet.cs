@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using TJADotNet.Format;
 
 namespace TJADotNet
@@ -18,8 +16,12 @@ namespace TJADotNet
         /// 譜面をパースします。
         /// </summary>
         /// <param name="str">.tjaフォーマットな文字列。</param>
-        public TJADotNet(string str)
+        /// <param name="isFullLoad">フルロードを行うかどうか。falseの場合はヘッダーのみのパースになる。</param>
+        public TJADotNet(string str, bool isFullLoad = true)
         {
+            //改行コードを置き換える
+            str = str.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
+
             // COURSE: で分割 ついでにコメントも消す
             var splitedCourses = Regex.Replace(str, @" *//.*", "", RegexOptions.Multiline).Split(new string[] { "COURSE:" }, StringSplitOptions.None);
             // 各要素にCOURSE: をくっつける ただし、[0]は共通ヘッダなので、COURSE:をつけない。
@@ -80,7 +82,7 @@ namespace TJADotNet
                         if (nowLine.Trim().IndexOf(",") > -1)
                         {
                             // 行にカンマがある
-                            if (nowLine.Trim().StartsWith("#"))
+                            if (nowLine.Trim().StartsWith("#") || nowLine.Trim().StartsWith("EXAM"))
                             {
                                 // カンマがあるけど、多分命令行なので処理を続行する
                                 nowMeasure += nowLine + NewLine;
@@ -166,6 +168,10 @@ namespace TJADotNet
                     Chart.Info.SubTitle = subtitler(common.Value, out var mode);
                     Chart.Info.SubTitleMode = mode;
                 }
+                else if (header("MAKER") || header("NOTESDESIGNER") || header("AUTHOR") || header("CREATOR"))
+                {
+                    Chart.Info.Maker = common.Value;
+                }
                 else if (header("BPM"))
                 {
                     if (double.TryParse(common.Value, out var result))
@@ -224,8 +230,11 @@ namespace TJADotNet
                             case 2:
                                 Chart.Info.ScoreMode = ScoreModes.Gen3;
                                 break;
+                            case 3:
+                                Chart.Info.ScoreMode = ScoreModes.Gen4;
+                                break;
                             default:
-                                Chart.Info.ScoreMode = ScoreModes.Gen3;
+                                Chart.Info.ScoreMode = ScoreModes.Gen4;
                                 break;
                         }
                     }
@@ -291,6 +300,13 @@ namespace TJADotNet
                         Chart.Info.MovieOffset = result;
                     }
                 }
+                else if (header("ISURADAN")) //裏段位かどうか。完全に自己満。
+                {
+                    if (common.Value == "1" || common.Value == "true")
+                        Chart.Info.IsUraDan = true;
+                    else
+                        Chart.Info.IsUraDan = false;
+                }
             }
 
             foreach (var course in Chart.Courses)
@@ -319,6 +335,42 @@ namespace TJADotNet
                             course.Info.Level = result;
                         }
                     }
+                    else if (header("BALLOONNOR"))
+                    {
+                        // 末尾の,対策
+                        var split = item.Value.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                        for (int i = 0; i < split.Length; i++)
+                        {
+                            if (int.TryParse(split[i], out var result))
+                            {
+                                course.Info.BalloonNormal.Add(result);
+                            }
+                        }
+                    }
+                    else if (header("BALLOONEXP"))
+                    {
+                        // 末尾の,対策
+                        var split = item.Value.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                        for (int i = 0; i < split.Length; i++)
+                        {
+                            if (int.TryParse(split[i], out var result))
+                            {
+                                course.Info.BalloonExpert.Add(result);
+                            }
+                        }
+                    }
+                    else if (header("BALLOONMAS"))
+                    {
+                        // 末尾の,対策
+                        var split = item.Value.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                        for (int i = 0; i < split.Length; i++)
+                        {
+                            if (int.TryParse(split[i], out var result))
+                            {
+                                course.Info.BalloonMaster.Add(result);
+                            }
+                        }
+                    }
                     else if (header("BALLOON"))
                     {
                         // 末尾の,対策
@@ -330,6 +382,10 @@ namespace TJADotNet
                                 course.Info.Balloon.Add(result);
                             }
                         }
+                    }
+                    else if (header("NOTESDESIGNER"))
+                    {
+                        course.Info.NotesDesigner = item.Value;
                     }
                     else if (header("SCOREINIT"))
                     {
@@ -360,6 +416,13 @@ namespace TJADotNet
                         if (int.TryParse(item.Value, out var result))
                         {
                             course.Info.ScoreDiff = result;
+                        }
+                    }
+                    else if (header("SCORENIJI"))
+                    {
+                        if (int.TryParse(item.Value, out var result))
+                        {
+                            course.Info.ScoreNiji = result;
                         }
                     }
                     else if (header("STYLE"))
@@ -396,7 +459,7 @@ namespace TJADotNet
                             }
                         }
                     }
-                    else if (header("EXAM1") || header("EXAM2") || header("EXAM3"))
+                    else if (header("EXAM1") || header("EXAM2") || header("EXAM3") || header("EXAM4") || header("EXAM5") || header("EXAM6") || header("EXAM7"))
                     {
                         var split = item.Value.Split(new string[] { "," }, StringSplitOptions.None);
                         var exam = new Exam();
@@ -496,6 +559,18 @@ namespace TJADotNet
                             case "EXAM3":
                                 course.Info.Exam3 = exam;
                                 break;
+                            case "EXAM4":
+                                course.Info.Exam4 = exam;
+                                break;
+                            case "EXAM5":
+                                course.Info.Exam5 = exam;
+                                break;
+                            case "EXAM6":
+                                course.Info.Exam6 = exam;
+                                break;
+                            case "EXAM7":
+                                course.Info.Exam7 = exam;
+                                break;
                             default:
                                 throw new InvalidDataException();
                         }
@@ -542,6 +617,26 @@ namespace TJADotNet
                             course.Info.HiddenBranch = false;
                         }
                     }
+                    else if (header("GAUGESCORE"))
+                    {
+                        // 末尾の,対策
+                        var split = item.Value.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                        for (int i = 0; i < split.Length; i++)
+                        {
+                            if (int.TryParse(split[i], out var result))
+                            {
+                                course.Info.GaugeScore.Add(result);
+                            }
+                        }
+                    }
+                    else if (header("TEXT"))
+                    {
+                        course.Info.WE_Text = item.Value;
+                    }
+                    else if (header("#PAPAMAMA"))
+                    {
+                        course.Info.PapaMama = true;
+                    }
                 }
             }
 
@@ -558,12 +653,30 @@ namespace TJADotNet
                     var nowBranch = Branches.Normal;
                     var nowMeasure = new Measure(4, 4);
                     var measureCount = 0;
+                    var CanShowBarLine = true;
                     var branchBeforeMeasureCount = 0;
                     var branchBeforeTime = 0L;
+                    var branchBeforeMeasure = new Measure(4, 4);
+                    var branchBeforeScroll = 1.0D;
+                    var branchBeforeBPM = Chart.Info.BPM;
+                    var branchBeforeGogo = false;
+                    var branchBeforeShowBarLine = true;
                     var branchCount = 0;
                     var branchAfterMeasure = 0;
                     var balloonIndex = 0;
+                    var balloonIndexNor = 0;
+                    var balloonIndexExp = 0;
+                    var balloonIndexMas = 0;
                     Chip rollBegin = null;
+                    var IsSudden = false;
+                    var SuddenShowTime = 0.0D;
+                    var SuddenMoveTime = 0.0D;
+                    var NowRoll = false;
+                    var sectionFlag = false;
+                    Chip c = new Chip();
+                    Chip branchingChip = null;
+                    string nowLyric = "";
+                    string branchBeforeLyric = "";
 
                     var bgm = new Chip();
                     bgm.ChipType = Chips.BGMStart;
@@ -576,22 +689,22 @@ namespace TJADotNet
                         // まずはその小節にある音符数(空白含む)を調べる
                         foreach (var line in measure.Split(new string[] { NewLine }, StringSplitOptions.RemoveEmptyEntries))
                         {
-                            if (!line.StartsWith("#"))
+                            if (!line.StartsWith("#") && !line.StartsWith("EXAM"))
                             {
                                 nowMeasureNotes += line.Length;
                             }
                         }
 
-
+                        var lineSplit = measure.Split(new string[] { NewLine }, StringSplitOptions.RemoveEmptyEntries);
                         // 実際にListにブチ込んでいく
-                        foreach (var line in measure.Split(new string[] { NewLine }, StringSplitOptions.RemoveEmptyEntries))
+                        foreach (var line in lineSplit)
                         {
                             // 小節開始時の一つの音符あたりの時間
                             // わざわざ文字の度再計算させてるけど仕方ないな！
                             var timePerNotes = (long)(nowMeasure.GetRate() / nowBPM / nowMeasureNotes * 1000 * 1000.0);
 
 
-                            if (!line.StartsWith("#"))
+                            if (!line.StartsWith("#") && !line.StartsWith("EXAM"))
                             {
                                 if (!measureAdded)
                                 {
@@ -600,7 +713,7 @@ namespace TJADotNet
                                     measureChip.ChipType = Chips.Measure;
                                     measureChip.IsHitted = false;
                                     measureChip.IsGoGoTime = gogoTime;
-                                    measureChip.CanShow = true;
+                                    measureChip.CanShow = CanShowBarLine;
                                     measureChip.Scroll = nowScroll;
                                     measureChip.Branch = nowBranch;
                                     measureChip.Branching = branching;
@@ -608,7 +721,10 @@ namespace TJADotNet
                                     measureChip.Scroll = nowScroll;
                                     measureChip.BPM = nowBPM;
                                     measureChip.MeasureCount = measureCount;
-                                    measureChip.Measure = nowMeasure;
+                                    //無理矢理値渡しをする。
+                                    measureChip.Measure = new Measure(nowMeasure.Part, nowMeasure.Beat);
+                                    measureChip.sudden = IsSudden;
+                                    measureChip.Lyric = nowLyric;
                                     // Listへ
                                     list.Add(measureChip);
                                     measureAdded = true;
@@ -629,20 +745,70 @@ namespace TJADotNet
                                     chip.Scroll = nowScroll;
                                     chip.BPM = nowBPM;
                                     chip.MeasureCount = measureCount;
-                                    chip.Measure = nowMeasure;
-
-                                    if (chip.NoteType == Notes.Balloon)
+                                    //無理矢理値渡しをする。
+                                    chip.Measure = new Measure(nowMeasure.Part, nowMeasure.Beat);
+                                    chip.sudden = IsSudden;
+                                    chip.Lyric = nowLyric;
+                                    if(IsSudden)
                                     {
-                                        // ふうせん連打のノルマ
-                                        chip.RollCount = course.Info.Balloon[balloonIndex];
-                                        balloonIndex++;
+                                        chip.suddenShowTime = SuddenShowTime;
+                                        chip.suddenMoveTime = SuddenMoveTime;
                                     }
 
-                                    if (chip.NoteType == Notes.Balloon || chip.NoteType == Notes.RollStart || chip.NoteType == Notes.ROLLStart)
+                                    if ((chip.NoteType == Notes.Balloon || chip.NoteType == Notes.BlueBalloon || chip.NoteType == Notes.Kusudama || chip.NoteType == Notes.Denden) && !NowRoll)
+                                    {
+                                        // ふうせん連打のノルマ
+                                        if(course.Info.Balloon.Count > balloonIndex || course.Info.BalloonNormal.Count > balloonIndex || course.Info.BalloonExpert.Count > balloonIndex || course.Info.BalloonMaster.Count > balloonIndex)
+                                        {
+                                            if(course.Info.BalloonNormal.Count == 0 && course.Info.BalloonExpert.Count == 0 && course.Info.BalloonMaster.Count == 0)
+                                            {
+                                                chip.RollCount = course.Info.Balloon[balloonIndex];
+                                                balloonIndex++;
+                                            }
+                                            else
+                                            {
+                                                if(!chip.Branching)
+                                                {
+                                                    chip.RollCount = course.Info.BalloonNormal[balloonIndexNor];
+                                                    balloonIndexNor++;
+                                                    balloonIndexExp++;
+                                                    balloonIndexMas++;
+                                                }
+                                                else
+                                                {
+                                                    try
+                                                    {
+                                                        switch (chip.Branch)
+                                                        {
+                                                            case Branches.Normal:
+                                                                chip.RollCount = course.Info.BalloonNormal[balloonIndexNor];
+                                                                balloonIndexNor++;
+                                                                break;
+                                                            case Branches.Expert:
+                                                                chip.RollCount = course.Info.BalloonExpert[balloonIndexExp];
+                                                                balloonIndexExp++;
+                                                                break;
+                                                            case Branches.Master:
+                                                                chip.RollCount = course.Info.BalloonMaster[balloonIndexMas];
+                                                                balloonIndexMas++;
+                                                                break;
+                                                        }
+                                                    }
+                                                    catch
+                                                    {
+                                                        chip.RollCount = 0;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if ((chip.NoteType == Notes.Balloon || chip.NoteType == Notes.BlueBalloon || chip.NoteType == Notes.Denden || chip.NoteType == Notes.RollStart || chip.NoteType == Notes.ROLLStart || chip.NoteType == Notes.Kusudama) && !NowRoll)
                                     {
                                         // 連打
                                         // 始点を記憶しておく
                                         rollBegin = chip;
+                                        NowRoll = true;
                                     }
 
                                     if (chip.NoteType == Notes.RollEnd)
@@ -653,6 +819,7 @@ namespace TJADotNet
                                             rollBegin.RollEnd = chip;
                                         }
                                         rollBegin = null;
+                                        NowRoll = false;
                                     }
 
                                     // ひとつ進める
@@ -673,6 +840,16 @@ namespace TJADotNet
                                 var chip = new Chip();
                                 chip.IsHitted = false;
                                 chip.CanShow = false;
+                                // 共通
+                                chip.IsGoGoTime = gogoTime;
+                                chip.Scroll = nowScroll;
+                                chip.BPM = nowBPM;
+                                chip.Branch = nowBranch;
+                                chip.Branching = branching;
+                                chip.Time = nowTime;
+                                chip.MeasureCount = measureCount;
+                                chip.Lyric = nowLyric;
+                                
 
                                 var trimed = line.Trim();
 
@@ -713,9 +890,16 @@ namespace TJADotNet
                                 else if (command("#SCROLL"))
                                 {
                                     var param = trimed.Substring("#SCROLL".Length).Trim();
-                                    if (!string.IsNullOrWhiteSpace(param))
+                                    try
                                     {
-                                        nowScroll = Convert.ToDouble(param);
+                                        if (!string.IsNullOrWhiteSpace(param))
+                                        {
+                                            nowScroll = Convert.ToDouble(param);
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        
                                     }
                                     chip.ChipType = Chips.ScrollChange;
                                 }
@@ -734,42 +918,143 @@ namespace TJADotNet
                                     // シミュレータ側で実装するのでここでは特に何も無い。
                                     chip.ChipType = Chips.Section;
                                 }
+                                else if (command("#BRANCHING"))
+                                {//次の分岐の実際に分岐するポイントをこの命令が置かれた地点にする独自コマンド。最悪実装しなくても良い
+                                    chip.ChipType = Chips.Branching;
+                                    branchingChip = chip;
+                                }
                                 else if (command("#BRANCHSTART"))
                                 {
                                     // #BRANCHSTART <type>,expert,master
                                     chip.ChipType = Chips.BranchStart;
+                                    var param = trimed.Substring("#BRANCHSTART".Length).Trim();
+                                    var split = param.Split(new string[] { "," }, StringSplitOptions.None);
+                                    chip.branchExam.Type = BranchesConverter.GetBranchTypeFromString(split[0]);
+                                    if (!string.IsNullOrWhiteSpace(split[1]))
+                                    {
+                                        chip.branchExam.ExpertExam = Convert.ToDouble(split[1]);
+                                    }
+                                    if (!string.IsNullOrWhiteSpace(split[2]))
+                                    {
+                                        chip.branchExam.MasterExam = Convert.ToDouble(split[2]);
+                                    }
+                                    if (split.Length > 3)
+                                    {
+                                        chip.branchExam.Range = BranchesConverter.GetExamRangeFromString(split[3], chip.branchExam.Type);
+                                    }
+                                    else
+                                    {
+                                        chip.branchExam.Range = BranchesConverter.GetDefaultExamRangeFromBranchType(chip.branchExam.Type);
+                                    }
                                     branching = true;
+                                    chip.CanShow = true;
 
                                     branchBeforeMeasureCount = measureCount;
                                     branchBeforeTime = nowTime;
+                                    branchBeforeMeasure = new Measure(nowMeasure.Part, nowMeasure.Beat);//無理矢理値渡しをする。
+                                    branchBeforeScroll = nowScroll;
+                                    branchBeforeBPM = nowBPM;
+                                    branchBeforeGogo = gogoTime;
+                                    branchBeforeShowBarLine = CanShowBarLine;
                                     branchCount = 0;
 
                                     // 1小節前に分岐するフックを入れる。
-                                    var beforeMeasure = GetBeforeMeasureFromList(list, list.Count);
-                                    var beforeMeasureChip = new Chip();
-                                    beforeMeasureChip.ChipType = Chips.Branching;
-                                    beforeMeasureChip.BPM = list[beforeMeasure].BPM;
-                                    beforeMeasureChip.Scroll = list[beforeMeasure].Scroll;
-                                    beforeMeasureChip.Time = list[beforeMeasure].Time;
-                                    beforeMeasureChip.IsGoGoTime = list[beforeMeasure].IsGoGoTime;
-                                    list.Insert(beforeMeasure, beforeMeasureChip);
+                                    if(branchingChip == null)
+                                    {//#BRANCHINGの効果で設定されてなかったら
+                                        var beforeMeasure = GetBeforeMeasureFromList(list, list.Count);
+                                        var beforeMeasureChip = new Chip();
+                                        beforeMeasureChip.ChipType = Chips.Branching;
+                                        beforeMeasureChip.BPM = list[beforeMeasure].BPM;
+                                        beforeMeasureChip.Scroll = list[beforeMeasure].Scroll;
+                                        beforeMeasureChip.Time = list[beforeMeasure].Time;
+                                        beforeMeasureChip.IsGoGoTime = list[beforeMeasure].IsGoGoTime;
+                                        beforeMeasureChip.CanShow = list[beforeMeasure].CanShow;
+                                        beforeMeasureChip.IsHitted = false;
+                                        list.Insert(beforeMeasure, beforeMeasureChip);
+                                    }
+                                    else
+                                    {//設定済みならこの分岐に効果を発揮して用済みなので消し飛ばす
+                                        branchingChip = null;
+                                    }
+                                    for (int i = 0; i < list.Count; i++)
+                                    {
+                                        c = list[i];
+                                        if (c.ChipType == Chips.Section && c.Time == chip.Time)
+                                        {//自分の手前に#SECTIONがあった場合、分岐の手前でリセットされてすべて台無しになるので対策
+                                            list.Remove(c);
+                                            sectionFlag = true;
+                                            break;
+                                        }
+                                    }
+                                    course.Info.IsExistsBranch = true;
                                 }
                                 else if (command("#BRANCHEND"))
                                 {
                                     // 時間を……元に戻すッ！！！
-                                    nowTime = branchBeforeTime;
                                     measureCount = branchAfterMeasure;
 
-                                    chip.ChipType = Chips.BranchStart;
+                                    chip.ChipType = Chips.BranchEnd;
                                     branching = false;
+                                }
+                                else if (command("#LYRIC"))
+                                {
+                                    var param = trimed.Substring("#LYRIC".Length).Trim();
+                                    if (param == null) param = "";
+                                    nowLyric = param;
+                                }
+                                else if (command("#NEXTSONG"))
+                                {
+                                    var param = trimed.Substring("#NEXTSONG".Length).Trim();
+                                    var split = param.Split(new string[] { "," }, StringSplitOptions.None);
+                                    var nextSong = new NextSong();
+                                    nextSong.Title = split[0];
+                                    nextSong.SubTitle = split[1];
+                                    nextSong.Genre = split[2];
+                                    nextSong.Wave = split[3];
+                                    if (int.TryParse(split[4], out var result))
+                                    {
+                                        nextSong.ScoreInit = result;
+                                    }
+                                    if (int.TryParse(split[5], out var result2))
+                                    {
+                                        nextSong.ScoreDiff = result2;
+                                    }
+                                    if (split.Length == 8)
+                                    {
+                                        if (int.TryParse(split[7], out var result3))
+                                        {
+                                            nextSong.Course = CourseConverter.GetCoursesFromNumber(result3);
+                                        }
+                                        if (int.TryParse(split[6], out var result4))
+                                        {
+                                            nextSong.Level = result4;
+                                        }
+                                    }
+                                    course.Info.NextSongs.Add(nextSong);
+                                    chip.ChipType = Chips.NextSong;
+                                    chip.Time += 5000000;
+                                    nowTime += 5000000; //この辺りは適当だから気にしないで…
                                 }
                                 else if (command("#N") || command("#E") || command("#M"))
                                 {
                                     var type = trimed.Substring(0, 2);
                                     if (!string.IsNullOrWhiteSpace(type))
                                     {
+                                        if (!branching)
+                                        {
+                                            branchBeforeLyric = nowLyric;
+                                        }
+                                        else
+                                        {
+                                            nowLyric = branchBeforeLyric;
+                                        }
                                         // 時間を……元に戻すッ！！！
                                         nowTime = branchBeforeTime;
+                                        nowMeasure = new Measure(branchBeforeMeasure.Part, branchBeforeMeasure.Beat);//無理矢理値渡しをする。
+                                        nowScroll = branchBeforeScroll;
+                                        nowBPM = branchBeforeBPM;
+                                        gogoTime = branchBeforeGogo;
+                                        CanShowBarLine = branchBeforeShowBarLine;
                                         branchCount++;
                                         // 一番初めに書かれた譜面分岐の小節数を保持
                                         if (branchCount == 2)
@@ -796,28 +1081,248 @@ namespace TJADotNet
                                     // シミュレータ側で実装するのでここでは特に何も無い。
                                     chip.ChipType = Chips.LevelHold;
                                 }
+                                else if (command("#LEVELREDIR"))
+                                {
+                                    chip.ChipType = Chips.LevelRedir;
+                                    var param = trimed.Substring("#LEVELREDIR".Length).Trim();
+                                    var split = param.Split(new string[] { "," }, StringSplitOptions.None);
+                                    if (split.Length == 3) {
+                                        for (int i = 0; i < 3; i++) {
+                                            switch (split[i])
+                                            {
+                                                case "N":
+                                                    chip.RedirectBranch[i] = Branches.Normal;
+                                                    break;
+                                                case "E":
+                                                    chip.RedirectBranch[i] = Branches.Expert;
+                                                    break;
+                                                case "M":
+                                                    chip.RedirectBranch[i] = Branches.Master;
+                                                    break;
+                                                default:
+                                                    chip.RedirectBranch[i] = Branches.Normal;
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                }
+                                else if (command("#BARLINEON"))
+                                {
+                                    chip.ChipType = Chips.BarLineOn;
+                                    CanShowBarLine = true;
+                                }
+                                else if (command("#BARLINEOFF"))
+                                {
+                                    chip.ChipType = Chips.BarLineOff;
+                                    CanShowBarLine = false;
+                                }
+                                else if (command("#SUDDEN"))
+                                {
+                                    var param = trimed.Substring("#SUDDEN".Length).Trim();
+                                    var split = param.Split(new string[] { " " }, StringSplitOptions.None);
+                                    if (split.Length == 2) {
+                                        if (split[0] == "0" || split[1] == "0")
+                                        {
+                                            IsSudden = false;
+                                        }
+                                        else
+                                        {
+                                            IsSudden = true;
+                                            SuddenShowTime = Convert.ToDouble(split[0]);
+                                            SuddenMoveTime = Convert.ToDouble(split[1]);
+                                        }
+                                    }
+                                }
 
-                                // 共通
-                                chip.IsGoGoTime = gogoTime;
-                                chip.Scroll = nowScroll;
-                                chip.BPM = nowBPM;
-                                chip.Branch = nowBranch;
-                                chip.Branching = branching;
-                                chip.Time = nowTime;
-                                chip.MeasureCount = measureCount;
+                                else if (command("EXAM1") || command("EXAM2") || command("EXAM3") || command("EXAM4") || command("EXAM5") || command("EXAM6") || command("EXAM7"))
+                                {
+                                    var param = trimed.Substring("EXAM1:".Length).Trim();
+                                    var split = param.Split(new string[] { "," }, StringSplitOptions.None);
+                                    var exam = new Exam();
+                                    exam.IsSong = true;
+                                    // 条件
+                                    if (split[0] != null)
+                                    {
+                                        switch (split[0])
+                                        {
+                                            case "g":
+                                                exam.Condition = Conditions.Gauge;
+                                                break;
+                                            case "jp":
+                                                exam.Condition = Conditions.JudgePerfect;
+                                                break;
+                                            case "jg":
+                                                exam.Condition = Conditions.JudgeGood;
+                                                break;
+                                            case "jb":
+                                                exam.Condition = Conditions.JudgeBad;
+                                                break;
+                                            case "s":
+                                                exam.Condition = Conditions.Score;
+                                                break;
+                                            case "r":
+                                                exam.Condition = Conditions.Roll;
+                                                break;
+                                            case "h":
+                                                exam.Condition = Conditions.Hit;
+                                                break;
+                                            case "c":
+                                                exam.Condition = Conditions.Combo;
+                                                break;
+                                            default:
+                                                exam.Condition = Conditions.Gauge;
+                                                break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        exam.Condition = Conditions.Gauge;
+                                    }
+                                    // 範囲
+                                    if (split[3] != null)
+                                    {
+                                        switch (split[3])
+                                        {
+                                            case "m":
+                                                exam.Scope = Scopes.More;
+                                                break;
+                                            case "l":
+                                                exam.Scope = Scopes.Less;
+                                                break;
+                                            default:
+                                                exam.Scope = Scopes.More;
+                                                break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        exam.Scope = Scopes.More;
+                                    }
+
+                                    var valueIsSong = new DanValue();
+                                    // 赤合格
+                                    if (split[1] != null)
+                                    {
+                                        if (int.TryParse(split[1], out var result))
+                                        {
+                                            valueIsSong.RedValue = result;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        valueIsSong.RedValue = 0;
+                                    }
+
+                                    // 金合格
+                                    if (split[2] != null)
+                                    {
+                                        if (int.TryParse(split[2], out var result))
+                                        {
+                                            valueIsSong.GoldValue = result;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        valueIsSong.GoldValue = 0;
+                                    }
+
+                                    string examNum = trimed.Substring(0, 5);
+                                    // 最後にEXAM何かを決めて、それに代入。
+                                    switch (examNum)
+                                    {
+                                        case "EXAM1":
+                                            if (course.Info.Exam1 == null)
+                                                course.Info.Exam1 = new Exam();
+                                            course.Info.Exam1.IsSong = true;
+                                            course.Info.Exam1.Condition = exam.Condition;
+                                            course.Info.Exam1.Scope = exam.Scope;
+                                            course.Info.Exam1.ValueIsSong.Add(valueIsSong);
+                                            break;
+                                        case "EXAM2":
+                                            if (course.Info.Exam2 == null)
+                                                course.Info.Exam2 = new Exam();
+                                            course.Info.Exam2.IsSong = true;
+                                            course.Info.Exam2.Condition = exam.Condition;
+                                            course.Info.Exam2.Scope = exam.Scope;
+                                            course.Info.Exam2.ValueIsSong.Add(valueIsSong);
+                                            break;
+                                        case "EXAM3":
+                                            if (course.Info.Exam3 == null)
+                                                course.Info.Exam3 = new Exam();
+                                            course.Info.Exam3.IsSong = true;
+                                            course.Info.Exam3.Condition = exam.Condition;
+                                            course.Info.Exam3.Scope = exam.Scope;
+                                            course.Info.Exam3.ValueIsSong.Add(valueIsSong);
+                                            break;
+                                        case "EXAM4":
+                                            if (course.Info.Exam4 == null)
+                                                course.Info.Exam4 = new Exam();
+                                            course.Info.Exam4.IsSong = true;
+                                            course.Info.Exam4.Condition = exam.Condition;
+                                            course.Info.Exam4.Scope = exam.Scope;
+                                            course.Info.Exam4.ValueIsSong.Add(valueIsSong);
+                                            break;
+                                        case "EXAM5":
+                                            if (course.Info.Exam5 == null)
+                                                course.Info.Exam5 = new Exam();
+                                            course.Info.Exam5.IsSong = true;
+                                            course.Info.Exam5.Condition = exam.Condition;
+                                            course.Info.Exam5.Scope = exam.Scope;
+                                            course.Info.Exam5.ValueIsSong.Add(valueIsSong);
+                                            break;
+                                        case "EXAM6":
+                                            if (course.Info.Exam6 == null)
+                                                course.Info.Exam6 = new Exam();
+                                            course.Info.Exam6.IsSong = true;
+                                            course.Info.Exam6.Condition = exam.Condition;
+                                            course.Info.Exam6.Scope = exam.Scope;
+                                            course.Info.Exam6.ValueIsSong.Add(valueIsSong);
+                                            break;
+                                        case "EXAM7":
+                                            if (course.Info.Exam7 == null)
+                                                course.Info.Exam7 = new Exam();
+                                            course.Info.Exam7.IsSong = true;
+                                            course.Info.Exam7.Condition = exam.Condition;
+                                            course.Info.Exam7.Scope = exam.Scope;
+                                            course.Info.Exam7.ValueIsSong.Add(valueIsSong);
+                                            break;
+                                        default:
+                                            throw new InvalidDataException();
+                                    }
+                                }
 
                                 list.Add(chip);
+                                if(sectionFlag)
+                                {
+                                    list.Add(c);
+                                    sectionFlag = false;
+                                }
                             }
                             measureCount++;
                         }
                     }
                 }
-                parseTJA(course.Chip.Common, course.Measure.Common);
-                SENoteGenerator.GenerateSENotes(course.Chip.Common);
-                parseTJA(course.Chip.Player1, course.Measure.Player1);
-                SENoteGenerator.GenerateSENotes(course.Chip.Player1);
-                parseTJA(course.Chip.Player2, course.Measure.Player2);
-                SENoteGenerator.GenerateSENotes(course.Chip.Player2);
+                if (isFullLoad)
+                {
+                    parseTJA(course.Chip.Common, course.Measure.Common);
+                    SENoteGenerator.GenerateSENotes(course.Chip.Common);
+                    SENoteGenerator.GenerateKo(course.Chip.Common);
+                    for (int i = 0; i < course.Chip.Common.Count; i++)
+                    {
+                        var chip = course.Chip.Common[i];
+                        if (chip.NoteType == Notes.Space && chip.ChipType == Chips.Note)
+                        {
+                            course.Chip.Common.RemoveAt(i);
+                            i--;
+                        }
+                    }
+                    parseTJA(course.Chip.Player1, course.Measure.Player1);
+                    SENoteGenerator.GenerateSENotes(course.Chip.Player1);
+                    SENoteGenerator.GenerateKo(course.Chip.Player1);
+                    parseTJA(course.Chip.Player2, course.Measure.Player2);
+                    SENoteGenerator.GenerateSENotes(course.Chip.Player2);
+                    SENoteGenerator.GenerateKo(course.Chip.Player2);
+                }
             }
 
         }
@@ -910,15 +1415,15 @@ namespace TJADotNet
                 var ver = "Ver.";
                 var asm = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 // Ver.x.x
-                return ver + string.Format("{0}.{1}", asm.Major, asm.Minor);                
+                return ver + string.Format("{0}.{1}", asm.Major, asm.Minor);
             }
         }
 
 
         /// <summary>
-        /// 改行。Unix環境でも常にCRLFとして扱う。
+        /// 改行。Unix環境でも常にCRLF(\r\n)として扱う。
         /// </summary>
-        private const string NewLine = "\r\n";
+        public const string NewLine = "\r\n";
 
         /// <summary>
         /// チップリストからインデックスの前にある小節を返します。
@@ -928,7 +1433,7 @@ namespace TJADotNet
         /// <returns>小節番号。</returns>
         public int GetBeforeMeasureFromList(IReadOnlyList<Chip> list, int index)
         {
-            for (var i = index; i > 0; i--)
+            for (var i = index - 1; i > 0; i--)
             {
                 if (list[i].ChipType == Chips.Measure)
                 {

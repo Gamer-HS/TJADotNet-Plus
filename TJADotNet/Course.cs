@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TJADotNet
+﻿namespace TJADotNet
 {
     /// <summary>
     /// コースの列挙型。
@@ -38,7 +32,23 @@ namespace TJADotNet
         /// <summary>
         /// 段位認定モード
         /// </summary>
-        Dan
+        Dan,
+        /// <summary>
+        /// かんたん(裏)
+        /// </summary>
+        EasyEdit,
+        /// <summary>
+        /// ふつう(裏)
+        /// </summary>
+        NormalEdit,
+        /// <summary>
+        /// むずかしい(裏)
+        /// </summary>
+        HardEdit,
+        /// <summary>
+        /// WORLD'S END
+        /// </summary>
+        WE
     }
 
     public static class CourseConverter
@@ -59,6 +69,10 @@ namespace TJADotNet
                 case 4: return Courses.Edit;
                 case 5: return Courses.Tower;
                 case 6: return Courses.Dan;
+                case 7: return Courses.EasyEdit;
+                case 8: return Courses.NormalEdit;
+                case 9: return Courses.HardEdit;
+                case 10: return Courses.WE;
                 default: return Courses.Oni;
             }
         }
@@ -78,8 +92,17 @@ namespace TJADotNet
                 case "hard": return Courses.Hard;
                 case "oni": return Courses.Oni;
                 case "edit": return Courses.Edit;
+                case "ura": return Courses.Edit;//表記揺れ
+                case "oni_ex": return Courses.Edit;//表記揺れ
                 case "tower": return Courses.Tower;
                 case "dan": return Courses.Dan;
+                case "easyedit": return Courses.EasyEdit;
+                case "easy_ex":  return Courses.EasyEdit;//表記揺れ
+                case "normaledit": return Courses.NormalEdit;
+                case "normal_ex":  return Courses.NormalEdit;//表記揺れ
+                case "hardedit": return Courses.HardEdit;
+                case "hard_ex":  return Courses.HardEdit;//表記揺れ
+                case "we": return Courses.WE;
                 default: return Courses.Oni;
             }
         }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace TJADotNet
 {
@@ -24,6 +20,22 @@ namespace TJADotNet
         /// </summary>
         public List<int> Balloon { get; set; } = new List<int>();
         /// <summary>
+        /// 普通譜面のふうせん連打。
+        /// </summary>
+        public List<int> BalloonNormal { get; set; } = new List<int>();
+        /// <summary>
+        /// 玄人譜面のふうせん連打。
+        /// </summary>
+        public List<int> BalloonExpert { get; set; } = new List<int>();
+        /// <summary>
+        /// 達人譜面のふうせん連打。
+        /// </summary>
+        public List<int> BalloonMaster { get; set; } = new List<int>();
+        /// <summary>
+        /// 譜面の作成者(難易度ごと)。
+        /// </summary>
+        public string NotesDesigner { get; set; }
+        /// <summary>
         /// 初項。
         /// </summary>
         public int ScoreInit { get; set; }
@@ -36,21 +48,41 @@ namespace TJADotNet
         /// </summary>
         public int ScoreDiff { get; set; }
         /// <summary>
+        /// ニジイロ配点。
+        /// </summary>
+        public int ScoreNiji { get; set; }
+        /// <summary>
         /// 譜面スタイル。
         /// </summary>
         public Styles Style { get; set; }
         /// <summary>
         /// 段位認定モードの条件1。
         /// </summary>
-        public Exam Exam1 { get; set; } = new Exam();
+        public Exam Exam1 { get; set; }
         /// <summary>
         /// 段位認定モードの条件2。
         /// </summary>
-        public Exam Exam2 { get; set; } = new Exam();
+        public Exam Exam2 { get; set; }
         /// <summary>
         /// 段位認定モードの条件3。
         /// </summary>
-        public Exam Exam3 { get; set; } = new Exam();
+        public Exam Exam3 { get; set; }
+        /// <summary>
+        /// 段位認定モードの条件4。
+        /// </summary>
+        public Exam Exam4 { get; set; }
+        /// <summary>
+        /// 段位認定モードの条件5。
+        /// </summary>
+        public Exam Exam5 { get; set; }
+        /// <summary>
+        /// 段位認定モードの条件6。
+        /// </summary>
+        public Exam Exam6 { get; set; }
+        /// <summary>
+        /// 段位認定モードの条件7。
+        /// </summary>
+        public Exam Exam7 { get; set; }
         /// <summary>
         /// 段位認定モードの幕画面リスト。
         /// </summary>
@@ -64,9 +96,26 @@ namespace TJADotNet
         /// </summary>
         public double Total { get; set; }
         /// <summary>
+        /// この難易度に分岐が存在するかどうか。
+        /// </summary>
+        public bool IsExistsBranch { get; set; } = false;
+        /// <summary>
         /// 譜面分岐を分岐時まで隠す。
         /// </summary>
         public bool HiddenBranch { get; set; }
+        /// <summary>
+        /// ゲージの伸び率。ゲージMAXを10000点としたときの良1打の点数で表す。
+        /// 値が3つの場合は順番に普通譜面、玄人譜面、達人譜面に使用する。
+        /// </summary>
+        public List<int> GaugeScore { get; set; } = new List<int>();
+        /// <summary>
+        /// WEの属性。
+        /// </summary>
+        public string WE_Text { get; set; }
+        /// <summary>
+        /// パパママモードの有無。
+        /// </summary>
+        public bool PapaMama { get; set; }
     }
 
     /// <summary>
@@ -105,6 +154,14 @@ namespace TJADotNet
         /// 金合格の閾値。
         /// </summary>
         public int GoldValue { get; set; }
+        /// <summary>
+        /// 曲別条件かどうか。
+        /// </summary>
+        public bool IsSong { get; set; }
+        /// <summary>
+        /// 曲別条件だった場合の条件。
+        /// </summary>
+        public List<DanValue> ValueIsSong { get; set; } = new List<DanValue>(); //この辺りは適当だから気にしないで…
     }
 
     /// <summary>
@@ -221,5 +278,25 @@ namespace TJADotNet
         /// 公差。
         /// </summary>
         public int ScoreDiff { get; set; }
+        /// <summary>
+        /// コース名。
+        /// </summary>
+        public Courses Course { get; set; }
+        /// <summary>
+        /// 難易度。
+        /// </summary>
+        public int Level { get; set; }
+    }
+
+    public class DanValue
+    {
+        /// <summary>
+        /// 赤合格の閾値。
+        /// </summary>
+        public int RedValue { get; set; } = 0;
+        /// <summary>
+        /// 金合格の閾値。
+        /// </summary>
+        public int GoldValue { get; set; } = 0;
     }
 }

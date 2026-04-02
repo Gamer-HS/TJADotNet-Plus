@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TJADotNet.Format
+﻿namespace TJADotNet.Format
 {
     public class Measure
     {
@@ -13,7 +7,13 @@ namespace TJADotNet.Format
             Part = part;
             Beat = beat;
         }
+        /// <summary>
+        /// 分子。
+        /// </summary>
         public double Part { get; set; }
+        /// <summary>
+        /// 分母。
+        /// </summary>
         public double Beat { get; set; }
 
         public override string ToString()

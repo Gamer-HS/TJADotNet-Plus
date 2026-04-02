@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TJADotNet
+﻿namespace TJADotNet
 {
     /// <summary>
     /// 譜面情報クラス。
@@ -19,6 +13,10 @@ namespace TJADotNet
         /// 譜面のサブタイトル。
         /// </summary>
         public string SubTitle { get; set; }
+        /// <summary>
+        /// 譜面の作成者。
+        /// </summary>
+        public string Maker { get; set; }
         /// <summary>
         /// サブタイトルの表示方式。
         /// </summary>
@@ -75,6 +73,10 @@ namespace TJADotNet
         /// 背景動画のオフセット。
         /// </summary>
         public double MovieOffset { get; set; }
+        /// <summary>
+        /// 裏段位かどうか。
+        /// </summary>
+        public bool IsUraDan { get; set; } = false;
     }
 
     public enum ScoreModes
@@ -90,7 +92,11 @@ namespace TJADotNet
         /// <summary>
         /// 新筐体配点
         /// </summary>
-        Gen3
+        Gen3,
+        /// <summary>
+        /// ニジイロ配点
+        /// </summary>
+        Gen4
     }
 
     /// <summary>

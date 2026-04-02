@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TJADotNet.Format
+﻿namespace TJADotNet.Format
 {
     /// <summary>
     /// 音符の列挙型。
@@ -50,7 +44,35 @@ namespace TJADotNet.Format
         /// <summary>
         /// くすだま
         /// </summary>
-        Kusudama
+        Kusudama,
+        /// <summary>
+        /// ドン(手)
+        /// </summary>
+        DONHand,
+        /// <summary>
+        /// カッ(手)
+        /// </summary>
+        KAHand,
+        /// <summary>
+        /// 爆弾
+        /// </summary>
+        Bomb,
+        /// <summary>
+        /// AD-LIB
+        /// </summary>
+        ADLIB,
+        /// <summary>
+        /// カドン
+        /// </summary>
+        Kadon,
+        /// <summary>
+        /// 水風船
+        /// </summary>
+        BlueBalloon,
+        /// <summary>
+        /// でんでん
+        /// </summary>
+        Denden
     }
 
     public static class NotesConverter
@@ -69,6 +91,13 @@ namespace TJADotNet.Format
                 case '7': return Notes.Balloon;
                 case '8': return Notes.RollEnd;
                 case '9': return Notes.Kusudama;
+                case 'A': return Notes.DONHand;
+                case 'B': return Notes.KAHand;
+                case 'C': return Notes.Bomb;
+                case 'F': return Notes.ADLIB;
+                case 'G': return Notes.Kadon;
+                case 'W': return Notes.BlueBalloon;
+                case 'P': return Notes.Denden;
                 default: return Notes.Space;
             }
         }
