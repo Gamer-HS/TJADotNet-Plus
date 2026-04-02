@@ -1,4 +1,4 @@
-# TJADotNet
+# TJADotNet-Plus
 .NETな .tja フォーマット パーサを改良したもの
 
 ## 使い方
