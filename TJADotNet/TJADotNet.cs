@@ -849,7 +849,6 @@ namespace TJADotNet
                                 chip.Time = nowTime;
                                 chip.MeasureCount = measureCount;
                                 chip.Lyric = nowLyric;
-                                
 
                                 var trimed = line.Trim();
 
@@ -886,6 +885,7 @@ namespace TJADotNet
                                         delay = Convert.ToInt64(Convert.ToDouble(param) * 1000 * 1000.0);
                                     }
                                     nowTime += delay;
+
                                 }
                                 else if (command("#SCROLL"))
                                 {
@@ -1305,8 +1305,6 @@ namespace TJADotNet
                 if (isFullLoad)
                 {
                     parseTJA(course.Chip.Common, course.Measure.Common);
-                    SENoteGenerator.GenerateSENotes(course.Chip.Common);
-                    SENoteGenerator.GenerateKo(course.Chip.Common);
                     for (int i = 0; i < course.Chip.Common.Count; i++)
                     {
                         var chip = course.Chip.Common[i];
@@ -1316,12 +1314,11 @@ namespace TJADotNet
                             i--;
                         }
                     }
+                    SENoteGenerator.GenerateSENotes(course.Chip.Common);
                     parseTJA(course.Chip.Player1, course.Measure.Player1);
                     SENoteGenerator.GenerateSENotes(course.Chip.Player1);
-                    SENoteGenerator.GenerateKo(course.Chip.Player1);
                     parseTJA(course.Chip.Player2, course.Measure.Player2);
                     SENoteGenerator.GenerateSENotes(course.Chip.Player2);
-                    SENoteGenerator.GenerateKo(course.Chip.Player2);
                 }
             }
 
